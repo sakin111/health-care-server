@@ -1,16 +1,5 @@
 
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-
-
 model User {
     id                 String     @id @default(uuid())
     email              String     @unique
@@ -70,7 +59,7 @@ model Patient {
     email        String   @unique
     name         String
     profilePhoto String?
-    address      String
+    address      String?
     isDeleted    Boolean  @default(false)
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
@@ -78,15 +67,4 @@ model Patient {
     user User @relation(fields: [email], references: [email])
 
     @@map("patients")
-}
-
-enum UserRole {
-  PATIENT
-  DOCTOR
-  ADMIN
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
 }
