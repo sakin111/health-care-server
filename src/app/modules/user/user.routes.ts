@@ -13,6 +13,25 @@ router.post(
      req.body = userValidation.createPatientSchema.parse(JSON.parse(req.body.data))
      UserController.createPatient(req, res, next)
     },
+),
+router.post(
+    "/create-doctor",
+    fileUploader.upload.single('file'),
+    (req:Request, res:Response, next:NextFunction) => {
+     req.body = userValidation.createPatientSchema.parse(JSON.parse(req.body.data))
+     UserController.createPatient(req, res, next)
+    },
+),
+router.post(
+    "/create-admin",
+    fileUploader.upload.single('file'),
+    (req:Request, res:Response, next:NextFunction) => {
+     req.body = userValidation.createPatientSchema.parse(JSON.parse(req.body.data))
+     UserController.createPatient(req, res, next)
+    },
+),
+router.get(
+    "/allUser", UserController.AllUser
 )
 
 
