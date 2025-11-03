@@ -4,7 +4,7 @@ import { prisma } from "../../shared/prisma"
 import bcrypt from "bcryptjs"
 import { fileUploader } from "../../helper/fileUploader"
 import { paginationHelper } from "../../helper/calculatePagination";
-import { Prisma, UserRole } from "@prisma/client";
+import { Admin, Doctor, Prisma, UserRole } from "@prisma/client";
 import { userSearchField } from "./user.constant";
 import config from "../../../config";
 
@@ -36,61 +36,69 @@ const createPatient = async (req: Request) => {
 };
 
 
-const createDoctor = async (req: Request) => {
-  if (req.file) {
-    const uploadResult = await fileUploader.uploadToCloudinary(req.file); 
-    req.body.patient.profilePhoto = uploadResult?.secure_url;
-  }
+const createDoctor = async (req: Request): Promise<Doctor> => {
 
-  const hashPassword = await bcrypt.hash(req.body.password, config.jwt_salt);
+    const file = req.file;
 
-      const userData = {
+    if (file) {
+        const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+        req.body.doctor.profilePhoto = uploadToCloudinary?.secure_url
+    }
+    const hashedPassword: string = await bcrypt.hash(req.body.password, 10)
+
+    const userData = {
         email: req.body.doctor.email,
-        password: hashPassword,
+        password: hashedPassword,
         role: UserRole.DOCTOR
     }
 
-  
-  const result = await prisma.$transaction(async (tnx) => {
-   const user = await tnx.user.create({
-      data:userData
+    const result = await prisma.$transaction(async (transactionClient) => {
+        await transactionClient.user.create({
+            data: userData
+        });
+
+        const createdDoctorData = await transactionClient.doctor.create({
+            data: req.body.doctor
+        });
+
+        return createdDoctorData;
     });
 
-  const doctor =   await tnx.doctor.create({
-      data: req.body.doctor,
-    });
-
-     return { user, doctor };
-  });
-
-  return result;
+    return result;
 };
-const createAdmin = async (req: Request) => {
-  if (req.file) {
-    const uploadResult = await fileUploader.uploadToCloudinary(req.file); 
-    req.body.patient.profilePhoto = uploadResult?.secure_url;
-  }
 
-  const hashPassword = await bcrypt.hash(req.body.password, config.jwt_salt);
-      const userData = {
+const createAdmin = async (req: Request): Promise<Admin> => {
+
+    const file = req.file;
+
+    if (file) {
+        const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+        req.body.admin.profilePhoto = uploadToCloudinary?.secure_url
+    }
+
+    const hashedPassword: string = await bcrypt.hash(req.body.password, 10)
+
+    const userData = {
         email: req.body.admin.email,
-        password: hashPassword,
+        password: hashedPassword,
         role: UserRole.ADMIN
     }
-  const result = await prisma.$transaction(async (tnx) => {
-   const user = await tnx.user.create({
-      data:userData
+
+    const result = await prisma.$transaction(async (transactionClient) => {
+        await transactionClient.user.create({
+            data: userData
+        });
+
+        const createdAdminData = await transactionClient.admin.create({
+            data: req.body.admin
+        });
+
+        return createdAdminData;
     });
 
-  const admin = await tnx.admin.create({
-      data: req.body.admin,
-    });
-
-     return { user, admin };
-  });
-
-  return result;
+    return result;
 };
+
 
 const getAllUser = async(params:any, option:any) =>{
 const {page, skip, sortBy,sortOrder,limit} = paginationHelper.calculatePagination(option)
