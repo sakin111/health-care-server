@@ -15,6 +15,7 @@ const createPatient = catchAsync(async (req: Request, res: Response) => {
 }
 )
 const createDoctor = catchAsync(async (req: Request, res: Response) => {
+    console.log(req);
     const result = await UserService.createDoctor(req)
     sendResponse(res,{
        statusCode: 201,
@@ -38,7 +39,7 @@ const AllUser = catchAsync(async (req: Request, res: Response) => {
     const filter = pick(req.query,["status","role","email","searchTerm"])
     const option = pick(req.query,["page","limit","sortBy","sortOrder"])
 
-    const result = await UserService.getAllUser(filter, option)
+    const result = await UserService.getAllFromDB(filter, option)
     sendResponse(res,{
        statusCode: 200,
        success:true,

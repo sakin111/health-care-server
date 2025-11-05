@@ -1,13 +1,13 @@
 
 
-type IOption = {
+export type IOption = {
     page?: string | number,
     limit?: string | number,
     skip?: string | number,
     sortBy?:string,
     sortOrder?:string
 }
-type TypeReturn ={
+export type TypeReturn ={
     page: number,
     limit: number,
     skip: number,

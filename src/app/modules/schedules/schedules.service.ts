@@ -1,9 +1,11 @@
 import { addMinutes,addHours, format } from "date-fns";
+import { prisma } from "../../shared/prisma";
 
 
 const insertIntoDb = async (payload:any) => {
   const {startTime,endTime, startDate, endDate} = payload;
   const intervalTime = 30
+  const schedules : any = []
   const currentDate = new Date(startDate)
   const lastDate = new Date(endDate)
 
@@ -30,8 +32,27 @@ const insertIntoDb = async (payload:any) => {
     while(startDateTime < endDateTime){
         const slotStartDateTime = startDateTime
         const slotEndDateTime = addMinutes(startDateTime, intervalTime)
+
+        const scheduleData = {
+            startDateTime: slotStartDateTime,
+            endDateTime: slotEndDateTime
+        }
+
+        const existingSchedule = await prisma.schedule.findFirst({
+            where:scheduleData
+        })
+        if(!existingSchedule){
+            const result = await prisma.schedule.create({
+                data: scheduleData
+            })
+        }
+        slotStartDateTime.setMinutes(slotStartDateTime.getMinutes() + intervalTime)
     }
+
+    currentDate.setDate(currentDate.getDate() + 1)
   }
+
+  return schedules
 };
 
 

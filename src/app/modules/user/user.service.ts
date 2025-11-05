@@ -1,71 +1,37 @@
-import { Request } from "express"
-import { prisma } from "../../shared/prisma"
+import { Request } from "express";
+import { prisma } from "../../shared/prisma";
+import bcrypt from "bcryptjs";
+import { fileUploader } from "../../helper/fileUploader";
 
-import bcrypt from "bcryptjs"
-import { fileUploader } from "../../helper/fileUploader"
-import { paginationHelper } from "../../helper/calculatePagination";
 import { Admin, Doctor, Prisma, UserRole } from "@prisma/client";
-import { userSearchField } from "./user.constant";
-import config from "../../../config";
+import { IOption, paginationHelper } from "../../helper/calculatePagination";
+import { userSearchableFields } from "./user.constant";
 
 
 const createPatient = async (req: Request) => {
-  if (req.file) {
-    const uploadResult = await fileUploader.uploadToCloudinary(req.file); 
-    req.body.patient.profilePhoto = uploadResult?.secure_url;
-  }
 
-  const hashPassword = await bcrypt.hash(req.body.password, 10);
-
-  const result = await prisma.$transaction(async (tnx) => {
-   const user = await tnx.user.create({
-      data: {
-        email: req.body.patient.email,
-        password: hashPassword,
-      },
-    });
-
-  const patient =   await tnx.patient.create({
-      data: req.body.patient,
-    });
-
-     return { user, patient };
-  });
-
-  return result;
-};
-
-
-const createDoctor = async (req: Request): Promise<Doctor> => {
-
-    const file = req.file;
-
-    if (file) {
-        const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-        req.body.doctor.profilePhoto = uploadToCloudinary?.secure_url
-    }
-    const hashedPassword: string = await bcrypt.hash(req.body.password, 10)
-
-    const userData = {
-        email: req.body.doctor.email,
-        password: hashedPassword,
-        role: UserRole.DOCTOR
+    if (req.file) {
+        const uploadResult = await fileUploader.uploadToCloudinary(req.file)
+        req.body.patient.profilePhoto = uploadResult?.secure_url
     }
 
-    const result = await prisma.$transaction(async (transactionClient) => {
-        await transactionClient.user.create({
-            data: userData
+    const hashPassword = await bcrypt.hash(req.body.password, 10);
+
+    const result = await prisma.$transaction(async (tnx) => {
+        await tnx.user.create({
+            data: {
+                email: req.body.patient.email,
+                password: hashPassword
+            }
         });
 
-        const createdDoctorData = await transactionClient.doctor.create({
-            data: req.body.doctor
-        });
-
-        return createdDoctorData;
-    });
+        return await tnx.patient.create({
+            data: req.body.patient
+        })
+    })
 
     return result;
-};
+}
 
 const createAdmin = async (req: Request): Promise<Admin> => {
 
@@ -99,58 +65,84 @@ const createAdmin = async (req: Request): Promise<Admin> => {
     return result;
 };
 
+const createDoctor = async (req: Request): Promise<Doctor> => {
 
-const getAllUser = async(params:any, option:any) =>{
-const {page, skip, sortBy,sortOrder,limit} = paginationHelper.calculatePagination(option)
+    const file = req.file;
 
-const andCondition : Prisma.UserWhereInput[] = []
-
-const {searchTerm, ...filterData} = params
-
-if(searchTerm){
-  OR: userSearchField.map(field => ({
-    [field]:{
-      contains: searchTerm,
-      mode: "insensitive"
+    if (file) {
+        const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+        req.body.doctor.profilePhoto = uploadToCloudinary?.secure_url
     }
-  }))
-}
+    const hashedPassword: string = await bcrypt.hash(req.body.password, 10)
 
-if(Object.keys(filterData).length > 0){
-  andCondition.push({
-    AND:Object.keys(filterData).map(key => ({
-      [key]:{
-        equals: (filterData as any)[key]
-      }
-    }))
-  })
-}
+    const userData = {
+        email: req.body.doctor.email,
+        password: hashedPassword,
+        role: UserRole.DOCTOR
+    }
+
+    const result = await prisma.$transaction(async (transactionClient) => {
+        await transactionClient.user.create({
+            data: userData
+        });
+
+        const createdDoctorData = await transactionClient.doctor.create({
+            data: req.body.doctor
+        });
 
 
-    const whereConditions: Prisma.UserWhereInput = andCondition.length > 0 ? {
-        AND: andCondition
+        return createdDoctorData;
+    });
+
+    return result;
+};
+
+
+const getAllFromDB = async (params: any, options: IOption) => {
+    const { page, limit, skip, sortBy, sortOrder } = paginationHelper.calculatePagination(options)
+    const { searchTerm, ...filterData } = params;
+
+    const andConditions: Prisma.UserWhereInput[] = [];
+
+    if (searchTerm) {
+        andConditions.push({
+            OR: userSearchableFields.map(field => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: "insensitive"
+                }
+            }))
+        })
+    }
+
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map(key => ({
+                [key]: {
+                    equals: (filterData as any)[key]
+                }
+            }))
+        })
+    }
+
+    const whereConditions: Prisma.UserWhereInput = andConditions.length > 0 ? {
+        AND: andConditions
     } : {}
 
-  const result = await prisma.user.findMany({
-    skip,
-    take:limit,
+    const result = await prisma.user.findMany({
+        skip,
+        take: limit,
 
-    where:{
-      AND: andCondition
-    },
-    orderBy:{
-      [sortBy] : sortOrder
-    }
+        where: whereConditions,
+        orderBy: {
+            [sortBy]: sortOrder
+        }
+    });
 
-
-  });
-
- const total = await prisma.user.count({
-   where: whereConditions
- })
-
-
-  return {
+    const total = await prisma.user.count({
+        where: whereConditions
+    });
+    return {
         meta: {
             page,
             limit,
@@ -160,10 +152,9 @@ if(Object.keys(filterData).length > 0){
     };
 }
 
-
 export const UserService = {
-createPatient,
-createDoctor,
-createAdmin,
- getAllUser 
+    createPatient,
+    createAdmin,
+    createDoctor,
+    getAllFromDB
 }

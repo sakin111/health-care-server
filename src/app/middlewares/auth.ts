@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express"
 import { verifyTokens } from "../utils/jwt"
+import config from "../../config"
 
 
 const auth = (...roles: string[]) =>{
@@ -9,7 +10,7 @@ const auth = (...roles: string[]) =>{
             if(!token){
                 throw new Error("token is missing")
             }
-            const verify = verifyTokens(token, "moonlight1")
+            const verify = verifyTokens(token, config.jwt_secret as string)
             req.user = verify
 
             if(roles.length && !roles.includes(verify.role)){

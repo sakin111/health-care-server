@@ -10,7 +10,7 @@ cloudinary.config({
   api_secret: config.cloudinary.api_secret,
 });
 
-// ---------- Multer setup ----------
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(process.cwd(), "/uploads"));
