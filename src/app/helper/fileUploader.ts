@@ -3,6 +3,8 @@ import path from "path";
 import fs from "fs";
 import { v2 as cloudinary } from "cloudinary";
 import config from "../../config";
+import ApiError from "../error/ApiError";
+import httpStatus from "http-status"
 
 cloudinary.config({
   cloud_name: config.cloudinary.cloud_name,
@@ -35,7 +37,7 @@ const uploadToCloudinary = async (file: Express.Multer.File) => {
     return result; 
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
-    throw new Error("Cloudinary upload failed");
+    throw new ApiError(httpStatus.BAD_GATEWAY,"Cloudinary upload failed");
   }
 };
 

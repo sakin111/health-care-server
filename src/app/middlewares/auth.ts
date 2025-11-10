@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express"
 import { verifyTokens } from "../utils/jwt"
 import config from "../../config"
+import ApiError from "../error/ApiError"
+import httpStatus from "http-status"
 
 
 const auth = (...roles: string[]) =>{
@@ -8,13 +10,13 @@ const auth = (...roles: string[]) =>{
         try {
             const token = req.cookies.accessToken
             if(!token){
-                throw new Error("token is missing")
+                throw new ApiError(httpStatus.UNAUTHORIZED,"token is missing")
             }
             const verify = verifyTokens(token, config.jwt_secret as string)
             req.user = verify
 
             if(roles.length && !roles.includes(verify.role)){
-                 throw new Error("you are not authorized")
+                 throw new ApiError(httpStatus.UNAUTHORIZED,"you are not authorized")
             }
             next()
         } catch (error) {

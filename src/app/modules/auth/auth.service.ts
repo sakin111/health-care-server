@@ -4,7 +4,8 @@ import { UserRole, UserStatus } from "@prisma/client";
 import bcrypt from "bcryptjs"
 import { generateToken } from "../../utils/jwt";
 import config from "../../../config";
-
+import ApiError from "../../error/ApiError";
+import httpStatus from "http-status"
 
 
 
@@ -18,7 +19,7 @@ const login = async (payload: {email:string, password :string}) => {
  })
  const validatePassword = await bcrypt.compare(payload.password, user.password)
  if(!validatePassword){
-    throw new Error("password is incorrect")
+    throw new ApiError(httpStatus.BAD_REQUEST,"invalid credentials")
  }
 
  const userPayload = {
