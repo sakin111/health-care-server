@@ -36,7 +36,36 @@ const updateIntoDB = catchAsync(async (req: Request, res: Response) => {
 })
 
 
+const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
+
+    const { id } = req.params;
+
+    const result = await DoctorService.deleteDoctor(id);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Doctor deleted successfully!",
+        data: result
+    })
+})
+
+const suggestions = catchAsync(async (req: Request, res: Response) => {
+
+    const result = await DoctorService.suggestions(req.body);
+
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "AI symptom suggestions fetched successfully!",
+        data: result
+    })
+})
+
+
 export const DoctorController = {
     getAllFromDB,
-    updateIntoDB
+    updateIntoDB,
+    deleteDoctor,
+    suggestions
 }

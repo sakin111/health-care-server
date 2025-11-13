@@ -4,6 +4,10 @@ import { doctorSearchableFields } from "./doctor.constant";
 import { prisma } from "../../shared/prisma";
 import { IDoctorUpdateInput } from "./doctor.interface";
 import { IOption, paginationHelper } from "../../helper/calculatePagination";
+import ApiError from "../../error/ApiError";
+import httpStatus  from "http-status";
+import { openai } from "../../helper/openRouter";
+import { extractJsonFromMessage } from "../../helper/extractJsonFromMessage";
 
 
 const getAllFromDB = async (filters: any, options: IOption) => {
@@ -14,7 +18,7 @@ const getAllFromDB = async (filters: any, options: IOption) => {
 
     if (searchTerm) {
         andConditions.push({
-            OR: doctorSearchableFields.map((field : any) => ({
+            OR: doctorSearchableFields.map((field: any) => ({
                 [field]: {
                     contains: searchTerm,
                     mode: "insensitive"
@@ -23,7 +27,7 @@ const getAllFromDB = async (filters: any, options: IOption) => {
         })
     }
 
-    // "", "medicine"
+
     if (specialties && specialties.length > 0) {
         andConditions.push({
             doctorSpecialties: {
@@ -103,7 +107,7 @@ const updateIntoDB = async (id: string, payload: Partial<IDoctorUpdateInput>) =>
                 })
             }
 
-            const createSpecialtyIds = specialties.filter((specialty : any) => !specialty.isDeleted);
+            const createSpecialtyIds = specialties.filter((specialty: any) => !specialty.isDeleted);
 
             for (const specialty of createSpecialtyIds) {
                 await tnx.doctorSpecialties.create({
@@ -137,7 +141,74 @@ const updateIntoDB = async (id: string, payload: Partial<IDoctorUpdateInput>) =>
 
 }
 
+
+const deleteDoctor = async (id: string) => {
+    const result = await prisma.doctor.delete({
+        where: {
+            id
+        }
+    })
+    return result
+
+}
+
+
+const suggestions = async (payload:{symptom: string}) => {
+
+    if(!(payload && payload.symptom)){
+        throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid input for symptom suggestions');
+    }
+  
+   const doctor = await prisma.doctor.findMany({
+    where:{
+        isDeleted:false
+    },
+    include:{
+        doctorSpecialties:{
+            include:{
+                specialities:true
+            }
+        }
+    }
+   })
+
+    const prompt = `
+You are a medical assistant AI. Based on the patient's symptoms, suggest the top 3 most suitable doctors.
+Each doctor has specialties and years of experience.
+Only suggest doctors who are relevant to the given symptoms.
+
+Symptoms: ${payload.symptom}
+
+Here is the doctor list (in JSON):
+${JSON.stringify(doctor, null, 2)}
+
+Return your response in JSON format with full individual doctor data. 
+`;
+
+    console.log("analyzing......\n")
+    const completion = await openai.chat.completions.create({
+        model: 'z-ai/glm-4.5-air:free',
+        messages: [
+            {
+                role: "system",
+                content:
+                    "You are a helpful AI medical assistant that provides doctor suggestions.",
+            },
+            {
+                role: 'user',
+                content: prompt,
+            },
+        ],
+    });
+
+     const result = await extractJsonFromMessage(completion.choices[0].message)
+    return result;
+
+}
+
 export const DoctorService = {
     getAllFromDB,
-    updateIntoDB
+    updateIntoDB,
+    deleteDoctor,
+    suggestions 
 }
