@@ -15,5 +15,6 @@ export default {
         api_key: process.env.CLOUDINARY_API_KEY,
         cloud_name: process.env.CLOUDINARY_API_CLOUD,
     },
-    openRouterApiKey: process.env.OPEN_AI_API_KEY
+    openRouterApiKey: process.env.OPEN_AI_API_KEY,
+    stripe_secret_key: process.env.STRIPE_SECRET_KEY
 }
