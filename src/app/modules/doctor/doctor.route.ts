@@ -17,6 +17,10 @@ router.patch(
     "doctor/:id",
     DoctorController.updateIntoDB
 )
+router.get(
+    "doctor/:id",
+    DoctorController.getDoctorById
+)
 router.delete(
     "/doctor",
     DoctorController.deleteDoctor

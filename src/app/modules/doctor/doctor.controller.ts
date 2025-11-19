@@ -50,6 +50,19 @@ const deleteDoctor = catchAsync(async (req: Request, res: Response) => {
     })
 })
 
+const getDoctorById = catchAsync(async (req: Request, res: Response) => {
+
+    const { id } = req.params;
+
+    const result = await DoctorService.getDoctorById(id);
+    sendResponse(res, {
+        statusCode: 200,
+        success: true,
+        message: "Doctor fetched successfully!",
+        data: result
+    })
+})
+
 const suggestions = catchAsync(async (req: Request, res: Response) => {
 
     const result = await DoctorService.suggestions(req.body);
@@ -67,5 +80,6 @@ export const DoctorController = {
     getAllFromDB,
     updateIntoDB,
     deleteDoctor,
-    suggestions
+    suggestions,
+    getDoctorById
 }

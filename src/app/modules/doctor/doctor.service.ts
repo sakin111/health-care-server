@@ -67,7 +67,8 @@ const getAllFromDB = async (filters: any, options: IOption) => {
                 include: {
                     specialities: true
                 }
-            }
+            },
+            reviews: true
         }
     });
 
@@ -206,9 +207,32 @@ Return your response in JSON format with full individual doctor data.
 
 }
 
+
+
+const getDoctorById = async( id:string): Promise<Doctor | null > =>{
+   const result = await prisma.doctor.findUnique({
+    where:{
+        id,
+        isDeleted:false
+    },
+    include:{
+        doctorSpecialties:{
+            include:{
+                specialities:true
+            }
+        },
+        reviews:true
+    }
+   })
+   return result
+}
+
+
+
 export const DoctorService = {
     getAllFromDB,
     updateIntoDB,
     deleteDoctor,
-    suggestions 
+    suggestions ,
+    getDoctorById
 }
