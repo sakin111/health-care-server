@@ -10,6 +10,15 @@ export default {
     database_url: process.env.DATABASE_URL,
     jwt_secret: process.env.JWT_SECRET,
     jwt_salt: process.env.JWT_SALT as string,
+    jwt_access_expire: process.env.JWT_ACCESS_EXPIRE,
+    jwt_refresh_expire: process.env.JWT_REFRESH_EXPIRE,
+    jwt_reset_expire_in : process.env.JWT_RESET_EXPIRE_IN,
+    reset_pass_link: process.env.RESET_PASS_LINK,
+    emailSender:{
+        email: process.env.EMAIL_SENDER_EMAIL,
+        app_pass: process.env.EMAIL_SENDER_APP_PASS,
+    },
+
     cloudinary: {
         api_secret: process.env.CLOUDINARY_API_SECRET,
         api_key: process.env.CLOUDINARY_API_KEY,

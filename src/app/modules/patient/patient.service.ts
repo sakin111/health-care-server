@@ -1,14 +1,15 @@
 import { Patient, Prisma, UserStatus } from '@prisma/client';
 import { IPatientFilterRequest } from './patient.interface';
-import { IOptions, paginationHelper } from '../../helper/paginationHelper';
 import { patientSearchableFields } from './patient.constant';
 import { prisma } from '../../shared/prisma';
-import { IJWTPayload } from '../../types/common';
+import { IOption, paginationHelper } from '../../helper/calculatePagination';
+import { IJwtPayload } from '../../Types/common';
+
 
 
 const getAllFromDB = async (
     filters: IPatientFilterRequest,
-    options: IOptions,
+    options: IOption,
 ) => {
     const { limit, page, skip } = paginationHelper.calculatePagination(options);
     const { searchTerm, ...filterData } = filters;
@@ -102,9 +103,9 @@ const softDelete = async (id: string): Promise<Patient | null> => {
     });
 };
 
-// PatientHealthData, MedicalReport, patient
 
-const updateIntoDB = async (user: IJWTPayload, payload: any) => {
+
+const updateIntoDB = async (user: IJwtPayload, payload: any) => {
     const { medicalReport, patientHealthData, ...patientData } = payload;
 
     const patientInfo = await prisma.patient.findUniqueOrThrow({
@@ -112,7 +113,7 @@ const updateIntoDB = async (user: IJWTPayload, payload: any) => {
             email: user.email,
             isDeleted: false
         }
-    });
+    }); 
 
     return await prisma.$transaction(async (tnx) => {
         await tnx.patient.update({
